@@ -1,0 +1,37 @@
+{
+  "anomaly_precision": 1.0,
+  "anomaly_recall": 1.0,
+  "detected": 4,
+  "injected": 4,
+  "root_cause_type_accuracy": 1.0,
+  "root_cause_resource_recall": 1.0,
+  "savings_estimates": [
+    {
+      "truth": "GT-1",
+      "estimated": 1835.4,
+      "actual": 1836.0,
+      "err_pct": 0.0
+    },
+    {
+      "truth": "GT-2",
+      "estimated": 1168.8,
+      "actual": 1200.0,
+      "err_pct": 2.6
+    },
+    {
+      "truth": "GT-3",
+      "estimated": 852.9,
+      "actual": 858.6,
+      "err_pct": 0.7
+    },
+    {
+      "truth": "GT-4",
+      "estimated": 764.1,
+      "actual": 764.1,
+      "err_pct": 0.0
+    }
+  ],
+  "mean_savings_error_pct": 0.8,
+  "unsafe_recommendations_with_policy": 0,
+  "unsafe_recommendations_naive_baseline": 3
+}

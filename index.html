@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CloudSpend Autopilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#edf0f2;--surface:#fff;--ink:#16222d;--mute:#5b6b79;--rule:#cbd3da;--amber:#f2c14e;--amber-bg:#fbeec8;--green:#17795e;--red:#b23a2b;--blue:#27506f;--r:6px}
+@media (prefers-color-scheme:dark){:root{--paper:#10171d;--surface:#18222b;--ink:#e6ecf0;--mute:#93a3b0;--rule:#2b3a46;--amber-bg:#3a3118;--green:#4fc4a1;--red:#ec8b7c;--blue:#8bb6d6}}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:clamp(28px,4.4vw,46px);line-height:1.05;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 18px}.num{font-variant-numeric:tabular-nums}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:16px}
+.grid{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:18px;margin-top:18px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+h2{font-size:15px;margin:0 0 10px;font-weight:600}
+.rec{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--rule);padding:12px 4px;cursor:pointer;color:inherit;font:inherit}
+.rec:first-of-type{border-top:0}.rec:hover{background:var(--paper)}.rec[aria-selected=true]{background:var(--amber-bg)}
+.rec:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.rec b{display:block}.meta{color:var(--mute);font-size:13px}.sav{color:var(--green);font-weight:600}
+.tag{display:inline-block;border:1px solid var(--rule);border-radius:99px;padding:0 8px;font-size:12px;margin-right:4px}
+.tag.blocked{color:var(--red);border-color:var(--red)}.tag.done{color:var(--green);border-color:var(--green)}
+.chain{position:relative;margin:0;padding:0 0 0 30px;list-style:none}
+.chain:before{content:"";position:absolute;left:10px;top:6px;bottom:6px;border-left:2px solid var(--rule)}
+.chain>li{position:relative;margin:0 0 18px}.chain>li:before{content:attr(data-n);position:absolute;left:-30px;top:0;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:12px;font-weight:600;display:grid;place-items:center}
+.chain h3{margin:0 0 4px;font-size:14px}.chain p{margin:2px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)}th{color:var(--mute);font-weight:600}
+code,pre{font:12px/1.5 ui-monospace,Menlo,monospace}pre{background:var(--paper);padding:8px;border-radius:var(--r);overflow:auto;margin:6px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+button.b{border:1px solid var(--ink);background:var(--ink);color:var(--surface);border-radius:var(--r);padding:8px 16px;font:600 14px inherit;cursor:pointer}
+button.b.alt{background:none;color:var(--ink)}button.b:disabled{opacity:.4;cursor:not-allowed}
+svg{display:block;width:100%;height:auto}.note{font-size:13px;color:var(--mute)}
+.chat{display:flex;gap:8px;margin-top:10px}.chat input{flex:1;padding:8px;border:1px solid var(--rule);border-radius:var(--r);background:var(--surface);color:var(--ink);font:inherit}
+@media(prefers-reduced-motion:no-preference){.rec{transition:background .15s}}
+</style></head><body><div class="wrap">
+<h1 id="h">Loading spend…</h1><p class="sub" id="sub"></p>
+<div class="panel"><h2>Daily cloud spend, anomalies shaded</h2><div id="total"></div></div>
+<div class="grid">
+ <div class="panel"><h2>Recommendations, ranked by safe savings</h2><div id="recs"></div></div>
+ <div class="panel" id="detail"><p class="note">Select a recommendation to see its evidence chain.</p></div>
+</div>
+<div class="panel" style="margin-top:18px"><h2>Ask the agents</h2><div class="chat"><input id="q" placeholder="Why did the bill go up?" aria-label="Question"><button class="b" id="ask">Ask</button></div><p id="ans" class="note"></p></div>
+<div class="panel" style="margin-top:18px"><h2>Audit log</h2><table><thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Item</th><th>Detail</th></tr></thead><tbody id="audit"></tbody></table></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),money=n=>"$"+Math.round(n).toLocaleString();let S,sel;
+function line(dates,cost,{base,a0,a1,h=190}={}){const W=900,pl=44,pb=20,pt=8,n=dates.length,mx=Math.max(...cost,base||0)*1.1,x=i=>pl+i*(W-pl-8)/(n-1),y=v=>pt+(h-pt-pb)*(1-v/mx);
+ let s=`<svg viewBox="0 0 ${W} ${h}" role="img" aria-label="Spend over time">`;
+ for(let k=0;k<=3;k++){const v=mx*k/3;s+=`<line x1="${pl}" x2="${W-8}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${money(v)}</text>`}
+ if(a0){const i0=dates.indexOf(a0),i1=dates.indexOf(a1);if(i0>=0)s+=`<rect x="${x(i0)-2}" y="${pt}" width="${Math.max(x(i1<0?n-1:i1)-x(i0)+4,4)}" height="${h-pt-pb}" fill="var(--amber-bg)" stroke="var(--amber)"/>`}
+ if(base)s+=`<line x1="${pl}" x2="${W-8}" y1="${y(base)}" y2="${y(base)}" stroke="var(--blue)" stroke-dasharray="5 4"/><text x="${W-10}" y="${y(base)-5}" text-anchor="end" font-size="11" fill="var(--blue)">baseline ${money(base)}/day</text>`;
+ s+=`<polyline fill="none" stroke="var(--ink)" stroke-width="2" points="${cost.map((c,i)=>x(i)+","+y(c)).join(" ")}"/>`;
+ [0,Math.floor(n/2),n-1].forEach(i=>s+=`<text x="${x(i)}" y="${h-4}" text-anchor="${i?i==n-1?"end":"middle":"start"}" font-size="11" fill="var(--mute)">${dates[i]}</text>`);return s+"</svg>"}
+async function load(){S=await (await fetch("/api/state")).json();const m=S.summary;
+ $("#h").textContent=`Cloud spend is ${m.pct_change>0?"up":"down"} ${Math.abs(m.pct_change)}% on baseline`;
+ $("#sub").innerHTML=`<span class="num">${money(m.current_daily)}/day</span> over the last 7 days vs <span class="num">${money(m.baseline_daily)}/day</span> before the first anomaly. ${m.anomalies} anomalies found, <b class="sav num">${money(m.potential_monthly_savings)}/month</b> of safe savings proposed.`;
+ const d=m.total_daily;let bands="";$("#total").innerHTML=line(d.map(x=>x.date),d.map(x=>x.cost),{base:m.baseline_daily});
+ $("#recs").innerHTML=S.recommendations.map(r=>`<button class="rec" data-id="${r.id}" aria-selected="${sel==r.id}"><b>${r.title}</b><span class="meta"><span class="sav num">${r.estimated_monthly_savings?money(r.estimated_monthly_savings)+"/mo":"no direct saving"}</span> · confidence ${Math.round(r.confidence*100)}% · risk ${r.risk}</span><br>${tag(r)}</button>`).join("");
+ document.querySelectorAll(".rec").forEach(b=>b.onclick=()=>{sel=b.dataset.id;show();document.querySelectorAll(".rec").forEach(x=>x.setAttribute("aria-selected",x==b))});
+ if(!sel&&S.recommendations[0]){sel=S.recommendations[0].id;show();document.querySelector(".rec").setAttribute("aria-selected",true)} else if(sel)show();audit()}
+const tag=r=>r.status!="pending"?`<span class="tag done">${r.status}</span>`:r.policy.verdict=="blocked"?`<span class="tag blocked">blocked by policy</span>`:r.policy.verdict=="deferred"?`<span class="tag">deferred</span>`:`<span class="tag">needs approval</span>`;
+function show(){const r=S.recommendations.find(x=>x.id==sel),e=r.evidence,t=e.trend,c=e.cause,ok=r.status=="pending"&&r.policy.verdict=="allowed_with_approval";
+ $("#detail").innerHTML=`<h2>${r.title}</h2><ol class="chain">
+ <li data-n="1"><h3>Spending trend</h3>${line(t.dates,t.cost,{base:t.baseline,a0:t.anomaly_start,a1:t.anomaly_end,h:170})}</li>
+ <li data-n="2"><h3>Suspected cause</h3><p>${c.summary}</p>${c.contributors.length?`<table><tr><th>Resource</th><th>Before/day</th><th>During/day</th><th>CPU</th></tr>${c.contributors.slice(0,5).map(x=>`<tr><td>${x.resource_id}</td><td class="num">$${x.baseline_daily}</td><td class="num">$${x.event_daily}</td><td>${x.cpu_avg==null?(x.attached===false?"unattached":"–"):Math.round(x.cpu_avg*100)+"%"}</td></tr>`).join("")}</table>`:""}
+  ${c.notes.map(n=>`<p class="note">${n}</p>`).join("")}</li>
+ <li data-n="3"><h3>Estimated savings</h3><p><b class="sav num">${money(e.savings.monthly)}/month</b>${e.savings.potential&&!e.savings.monthly?` (${money(e.savings.potential)} possible if a human confirms)`:""}</p><p class="note">Basis: ${e.savings.basis}.</p></li>
+ <li data-n="4"><h3>Confidence</h3><p><b>${Math.round(e.confidence.score*100)}%</b></p><p class="note">${e.confidence.factors.join(" ")}</p></li>
+ <li data-n="5"><h3>Operational impact</h3><p>Risk: <b>${e.impact.risk}</b></p>${e.impact.notes.map(n=>`<p class="note">${n}</p>`).join("")}${e.impact.commands.length?`<pre>${e.impact.commands.join("\n")}</pre><p class="note">Dry run: approval logs these commands; nothing is executed.</p>`:""}</li>
+ <li data-n="6"><h3>Decision</h3><div class="actions"><button class="b" id="ap" ${ok?"":"disabled"}>Approve</button><button class="b alt" id="rj" ${r.status=="pending"?"":"disabled"}>Reject</button></div>
+  <p class="note">${r.policy.verdict=="blocked"?"Policy blocked an automated change; a person needs to review this resource.":r.status!="pending"?"Decision recorded: "+r.status+".":"Nothing changes until you approve."}</p></li></ol>`;
+ $("#ap").onclick=()=>decide(r.id,"approve");$("#rj").onclick=()=>decide(r.id,"reject")}
+async function decide(id,d){const x=await fetch(`/api/recommendations/${id}/${d}`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!x.ok)alert((await x.json()).detail);await load()}
+async function audit(){const a=await (await fetch("/api/audit")).json();$("#audit").innerHTML=a.slice(0,12).map(e=>`<tr><td class="num">${new Date(e.ts*1000).toLocaleString()}</td><td>${e.actor}</td><td>${e.event.replaceAll("_"," ")}</td><td>${e.rec_id||""}</td><td class="note">${(e.detail.title||e.detail.note||(e.detail.commands?e.detail.commands.length+" command(s), not executed":"")||"")}</td></tr>`).join("")}
+$("#ask").onclick=async()=>{$("#ans").textContent="Thinking…";const x=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:$("#q").value||"Why did the bill go up?"})});$("#ans").textContent=(await x.json()).answer};
+load();
+</script></body></html>

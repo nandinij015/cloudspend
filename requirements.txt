@@ -1,0 +1,6 @@
+pandas>=2.2
+numpy>=1.26
+fastapi>=0.110
+uvicorn[standard]>=0.29
+google-adk>=1.0.0
+google-cloud-bigquery>=3.20   # only needed when SOURCE=bigquery

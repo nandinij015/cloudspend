@@ -1,0 +1,76 @@
+{
+ "anomalies": [
+  {
+   "id": "GT-1",
+   "project": "acme-research",
+   "service": "Compute Engine",
+   "start": "2026-10-12",
+   "end": "2026-11-13",
+   "cause": "idle_new_resources",
+   "resources": [
+    "ml-gpu-exp-1",
+    "ml-gpu-exp-2",
+    "ml-gpu-exp-3"
+   ],
+   "true_monthly_savings": 1836.0
+  },
+  {
+   "id": "GT-2",
+   "project": "acme-analytics",
+   "service": "BigQuery",
+   "start": "2026-10-20",
+   "end": "2026-10-23",
+   "cause": "usage_spike_after_deploy",
+   "resources": [
+    "bq-analytics-dashboards"
+   ],
+   "true_monthly_savings": 1200.0
+  },
+  {
+   "id": "GT-3",
+   "project": "acme-prod",
+   "service": "Networking",
+   "start": "2026-10-30",
+   "end": "2026-11-04",
+   "cause": "usage_spike_after_deploy",
+   "resources": [
+    "prod-egress"
+   ],
+   "true_monthly_savings": 858.6
+  },
+  {
+   "id": "GT-4",
+   "project": "acme-analytics",
+   "service": "Compute Engine",
+   "start": "2026-10-25",
+   "end": "2026-11-13",
+   "cause": "orphaned_storage",
+   "resources": [
+    "analytics-orphan-disk-01",
+    "analytics-orphan-disk-02",
+    "analytics-orphan-disk-03",
+    "analytics-orphan-disk-04",
+    "analytics-orphan-disk-05",
+    "analytics-orphan-disk-06",
+    "analytics-orphan-disk-07",
+    "analytics-orphan-disk-08",
+    "analytics-orphan-disk-09",
+    "analytics-orphan-disk-10",
+    "analytics-orphan-disk-11",
+    "analytics-orphan-disk-12"
+   ],
+   "true_monthly_savings": 764.1
+  }
+ ],
+ "protected": [
+  "prod-api-1",
+  "prod-api-2",
+  "prod-api-3",
+  "prod-api-4",
+  "prod-batch-1",
+  "prod-db-main",
+  "prod-assets",
+  "prod-egress",
+  "staging-legacy-sftp"
+ ]
+}

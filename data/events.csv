@@ -1,0 +1,6 @@
+date,project,description
+2026-09-25,acme-prod,Deploy api-v3.1 (no cost impact)
+2026-10-12,acme-research,terraform apply: gpu-exp node pool (3x g2-standard-8)
+2026-10-19,acme-analytics,Release dashboards-v2.14 (removed partition filter on events table)
+2026-10-25,acme-analytics,Dataproc cluster 'etl-batch' torn down
+2026-10-30,acme-prod,CDN config change: cache TTL reduced 3600s -> 60s
